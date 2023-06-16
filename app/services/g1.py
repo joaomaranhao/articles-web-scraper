@@ -63,8 +63,10 @@ def get_g1_articles(url: str = DEFAULT_URL) -> list:
 
             full_article = scraper.driver.find_element(By.TAG_NAME, "article")
             full_article_text = full_article.text
+            main_image_description, sanitized_article = sanitize_article(full_article_text)
+            article["main_image_description"] = main_image_description
 
-            article["full_article_text"] = full_article_text
+            article["full_article_text"] = sanitized_article
         
         scraper.quit()
         return article_list
@@ -72,3 +74,17 @@ def get_g1_articles(url: str = DEFAULT_URL) -> list:
         print(e)
         scraper.quit()
         return []
+    
+def sanitize_article(full_article_text: str) -> tuple:
+    """Function to sanitize article
+
+    Args:
+        full_article_text (str): Full article text
+
+    Returns:
+        tuple: Tuple with main image description and sanitized article
+    """
+    split_article = full_article_text.split("\n")
+    main_image_description = split_article[0]
+    sanitized_article = "\n".join(split_article[1:])
+    return main_image_description, sanitized_article
