@@ -1,6 +1,6 @@
-from data_scraper import DataScraper
+from services.g1 import get_g1_articles
 
 if __name__ == "__main__":
-    scraper = DataScraper(webdriver_manager=True, headless=False)
-    print(scraper._download_path)
-    scraper.quit()
+    g1_articles = get_g1_articles()
+    print(g1_articles)
+    
