@@ -1,3 +1,4 @@
+import os
 from data_scraper import DataScraper
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException, WebDriverException
@@ -86,6 +87,8 @@ def sanitize_article(full_article_text: str) -> tuple:
         tuple: Tuple with main image description and sanitized article
     """
     split_article = full_article_text.split("\n")
+    for paragraph in split_article:
+        paragraph = sanitize_paragraph(paragraph)
     main_image_description = split_article[0]
     sanitized_article = "\n".join(split_article[1:])
     return main_image_description, sanitized_article
@@ -116,3 +119,49 @@ def create_markdown(article_dict: dict) -> str:
             markdown += f"{paragraph}\n\n"
     return markdown
 
+def sanitize_paragraph(paragraph: str) -> str:
+    """Function to sanitize paragraph
+
+    Args:
+        paragraph (str): Paragraph
+
+    Returns:
+        str: Sanitized paragraph
+    """
+    if "Leia mais" in paragraph:
+        paragraph.replace("Leia mais", "")
+    if "leia mais" in paragraph:
+        paragraph.replace("leia mais", "")
+    if "Leia também" in paragraph:
+        paragraph.replace("Leia também", "")
+    if "leia também" in paragraph:
+        paragraph.replace("leia também", "")
+    if "; veja destaques" in paragraph:
+        paragraph.replace("; veja destaques", "")
+    if ". ." in paragraph:
+        paragraph.replace(". .", ".")
+    if "em entrevista ao g1" in paragraph:
+        paragraph.replace("em entrevista ao g1", "")
+    if ", ." in paragraph:
+        paragraph.replace(", .", ".")
+    return paragraph
+
+
+def save_markdown_to_file(markdown_text: str) -> str:
+    """Function to save markdown to file and return file name
+
+    Args:
+        markdown_text (str): Markdown text
+    """
+    file_name = markdown_text.split("\n")[0].split("# ")[1].replace(" ", "_").replace(",", "").replace(":", "").replace("'", "").lower()
+    with open(f"./tmp/{file_name}.md", "w") as file:
+        file.write(markdown_text)
+    return file_name
+
+def delete_markdown_file(file_name: str) -> None:
+    """Function to delete markdown file
+
+    Args:
+        file_name (str): File name
+    """
+    os.remove(f"./tmp/{file_name}.md")
