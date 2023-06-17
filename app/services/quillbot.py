@@ -5,7 +5,7 @@ from selenium.common.exceptions import NoSuchElementException, WebDriverExceptio
 
 DEFAULT_URL = "https://quillbot.com/"
 
-def rewrite_paragraph(paragraph: str) -> str:
+def rewrite_paragraph(paragraph: str, pt_br: bool = True) -> str:
     """Function to rewrite paragraphs using Quillbot
 
     Args:
@@ -22,15 +22,16 @@ def rewrite_paragraph(paragraph: str) -> str:
         print("Error getting URL. Check if the URL is correct.")
         return []
     try:
-        #Select language
-        language_value = "Portuguese"
-        language_dropdown = scraper.driver.find_element(By.CLASS_NAME, "css-rplln7")
-        language_dropdown.click()
-        time.sleep(.5)
-        language_button = language_dropdown.find_element(By.XPATH, f"//*[text()='{language_value}']")
-        time.sleep(.5)
-        language_button.click()
-        time.sleep(.5)
+        if pt_br:
+            #Select language
+            language_value = "Portuguese"
+            language_dropdown = scraper.driver.find_element(By.CLASS_NAME, "css-rplln7")
+            language_dropdown.click()
+            time.sleep(.5)
+            language_button = language_dropdown.find_element(By.XPATH, f"//*[text()='{language_value}']")
+            time.sleep(.5)
+            language_button.click()
+            time.sleep(.5)
 
         #Paste paragraph
         text_area = scraper.driver.find_element(By.ID, "paraphraser-input-box")
