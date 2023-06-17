@@ -2,6 +2,7 @@ import os
 from data_scraper import DataScraper
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException, WebDriverException
+from services.quillbot import rewrite_paragraph
 
 DEFAULT_URL = "https://g1.globo.com/pop-arte/games/"
 
@@ -93,58 +94,6 @@ def sanitize_article(full_article_text: str) -> tuple:
     sanitized_article = "\n".join(split_article[1:])
     return main_image_description, sanitized_article
 
-def create_markdown(article_dict: dict) -> str:
-    """Function to create markdown from article dict
-
-    Args:
-        article_dict (dict): Article
-
-    Returns:
-        str: Markdown
-    """
-    videos_used_counter = 0
-    paragraph_list = article_dict["full_article_text"].split("\n")
-    markdown = f"# {article_dict['article_title']}\n\n"
-    markdown += f"## {article_dict['article_description']}\n\n"
-    markdown += f"![{article_dict['main_image_description']}]({article_dict['image_url']})\n\n"
-    for paragraph in paragraph_list:
-        if article_dict["videos_ids"]:
-            if paragraph.startswith("'") and paragraph.endswith("'"):
-                markdown += f"### {paragraph[1:-1]}\n\n"
-                markdown += f'<iframe width="560" height="315" src="https://www.youtube.com/embed/{article_dict["videos_ids"][videos_used_counter]}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>\n\n'
-                videos_used_counter += 1
-            else:
-                markdown += f"{paragraph}\n\n"
-        else:
-            markdown += f"{paragraph}\n\n"
-    return markdown
-
-def create_article_html(article_dict: dict) -> str:
-    """Function to create HTML from article dict
-
-    Args:
-        article_dict (dict): Article
-
-    Returns:
-        str: HTML
-    """
-    videos_used_counter = 0
-    paragraph_list = article_dict["full_article_text"].split("\n")
-    html = f"<h1>{article_dict['article_title']}</h1>\n\n"
-    html += f"<h3>{article_dict['article_description']}</h3>\n\n"
-    html += f'<img src="{article_dict["image_url"]}" alt="{article_dict["main_image_description"]}">\n\n'
-    for paragraph in paragraph_list:
-        if article_dict["videos_ids"]:
-            if paragraph.startswith("'") and paragraph.endswith("'"):
-                html += f"<h2>{paragraph[1:-1]}</h2>\n\n"
-                html += f'<iframe class="centered-iframe" width="560" height="315" src="https://www.youtube.com/embed/{article_dict["videos_ids"][videos_used_counter]}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>\n\n'
-                videos_used_counter += 1
-            else:
-                html += f"<p>{paragraph}</p>\n\n"
-        else:
-            html += f"<p>{paragraph}</p>\n\n"
-    return html
-
 def sanitize_paragraph(paragraph: str) -> str:
     """Function to sanitize paragraph
 
@@ -172,25 +121,35 @@ def sanitize_paragraph(paragraph: str) -> str:
         paragraph = paragraph.replace(", .", ".")
     return paragraph
 
-
-def save_markdown_to_file(markdown_text: str) -> str:
-    """Function to save markdown to file and return file name
-
-    Args:
-        markdown_text (str): Markdown text
-    """
-    file_name = markdown_text.split("\n")[0].split("# ")[1].replace(" ", "_").replace(",", "").replace(":", "").replace("'", "").lower()
-    with open(f"./tmp/{file_name}.md", "w") as file:
-        file.write(markdown_text)
-    return file_name
-
-def delete_markdown_file(file_name: str) -> None:
-    """Function to delete markdown file
+def create_article_html(article_dict: dict) -> str:
+    """Function to create HTML from article dict
 
     Args:
-        file_name (str): File name
+        article_dict (dict): Article
+
+    Returns:
+        str: HTML
     """
-    os.remove(f"./tmp/{file_name}.md")
+    videos_used_counter = 0
+    paragraph_list = article_dict["full_article_text"].split("\n")
+    title = rewrite_paragraph(article_dict['article_title'])
+    html = f"<h1>{title}</h1>\n\n"
+    description = rewrite_paragraph(article_dict['article_description'])
+    html += f"<h3>{description}</h3>\n\n"
+    html += f'<img src="{article_dict["image_url"]}" alt="{article_dict["main_image_description"]}">\n\n'
+    for paragraph in paragraph_list:
+        if article_dict["videos_ids"]:
+            if paragraph.startswith("'") and paragraph.endswith("'"):
+                html += f"<h2>{paragraph[1:-1]}</h2>\n\n"
+                html += f'<iframe class="centered-iframe" width="560" height="315" src="https://www.youtube.com/embed/{article_dict["videos_ids"][videos_used_counter]}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>\n\n'
+                videos_used_counter += 1
+            else:
+                paragraph = rewrite_paragraph(paragraph)
+                html += f"<p>{paragraph}</p>\n\n"
+        else:
+            paragraph = rewrite_paragraph(paragraph)
+            html += f"<p>{paragraph}</p>\n\n"
+    return html
 
 def save_html_to_file(html_text: str) -> str:    
     """Function to save HTML to file and return file name
