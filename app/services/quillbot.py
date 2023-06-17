@@ -22,7 +22,6 @@ def rewrite_paragraph(paragraph: str) -> str:
         print("Error getting URL. Check if the URL is correct.")
         return []
     try:
-        rewrited_paragraphs = []
         #Select language
         language_value = "Portuguese"
         language_dropdown = scraper.driver.find_element(By.CLASS_NAME, "css-rplln7")
