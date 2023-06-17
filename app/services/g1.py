@@ -29,7 +29,7 @@ def get_g1_articles(url: str = DEFAULT_URL) -> list:
             description_element = article.find_element(By.CLASS_NAME, "feed-post-body-resumo")
 
             article_url = article.find_element(By.TAG_NAME, "a").get_attribute("href")
-            article_title = title_element.text
+            article_title = sanitize_paragraph(title_element.text)
             article_description = description_element.text
 
             article_dict = {
@@ -87,8 +87,8 @@ def sanitize_article(full_article_text: str) -> tuple:
         tuple: Tuple with main image description and sanitized article
     """
     split_article = full_article_text.split("\n")
-    for paragraph in split_article:
-        paragraph = sanitize_paragraph(paragraph)
+    for index, paragraph in enumerate(split_article):
+        split_article[index] = sanitize_paragraph(paragraph)
     main_image_description = split_article[0]
     sanitized_article = "\n".join(split_article[1:])
     return main_image_description, sanitized_article
@@ -111,13 +111,39 @@ def create_markdown(article_dict: dict) -> str:
         if article_dict["videos_ids"]:
             if paragraph.startswith("'") and paragraph.endswith("'"):
                 markdown += f"### {paragraph[1:-1]}\n\n"
-                markdown += f"[![](https://img.youtube.com/vi/{article_dict['videos_ids'][videos_used_counter]}/0.jpg)](https://www.youtube.com/watch?v={article_dict['videos_ids'][videos_used_counter]})\n\n"
+                markdown += f'<iframe width="560" height="315" src="https://www.youtube.com/embed/{article_dict["videos_ids"][videos_used_counter]}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>\n\n'
                 videos_used_counter += 1
             else:
                 markdown += f"{paragraph}\n\n"
         else:
             markdown += f"{paragraph}\n\n"
     return markdown
+
+def create_article_html(article_dict: dict) -> str:
+    """Function to create HTML from article dict
+
+    Args:
+        article_dict (dict): Article
+
+    Returns:
+        str: HTML
+    """
+    videos_used_counter = 0
+    paragraph_list = article_dict["full_article_text"].split("\n")
+    html = f"<h1>{article_dict['article_title']}</h1>\n\n"
+    html += f"<h3>{article_dict['article_description']}</h3>\n\n"
+    html += f'<img src="{article_dict["image_url"]}" alt="{article_dict["main_image_description"]}">\n\n'
+    for paragraph in paragraph_list:
+        if article_dict["videos_ids"]:
+            if paragraph.startswith("'") and paragraph.endswith("'"):
+                html += f"<h2>{paragraph[1:-1]}</h2>\n\n"
+                html += f'<iframe class="centered-iframe" width="560" height="315" src="https://www.youtube.com/embed/{article_dict["videos_ids"][videos_used_counter]}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>\n\n'
+                videos_used_counter += 1
+            else:
+                html += f"<p>{paragraph}</p>\n\n"
+        else:
+            html += f"<p>{paragraph}</p>\n\n"
+    return html
 
 def sanitize_paragraph(paragraph: str) -> str:
     """Function to sanitize paragraph
@@ -129,21 +155,21 @@ def sanitize_paragraph(paragraph: str) -> str:
         str: Sanitized paragraph
     """
     if "Leia mais" in paragraph:
-        paragraph.replace("Leia mais", "")
+        paragraph = paragraph.replace("Leia mais", "")
     if "leia mais" in paragraph:
-        paragraph.replace("leia mais", "")
+        paragraph = paragraph.replace("leia mais", "")
     if "Leia também" in paragraph:
-        paragraph.replace("Leia também", "")
+        paragraph = paragraph.replace("Leia também", "")
     if "leia também" in paragraph:
-        paragraph.replace("leia também", "")
+        paragraph = paragraph.replace("leia também", "")
     if "; veja destaques" in paragraph:
-        paragraph.replace("; veja destaques", "")
+        paragraph = paragraph.replace("; veja destaques", "")
     if ". ." in paragraph:
-        paragraph.replace(". .", ".")
+        paragraph = paragraph.replace(". .", ".")
     if "em entrevista ao g1" in paragraph:
-        paragraph.replace("em entrevista ao g1", "")
+        paragraph = paragraph.replace("em entrevista ao g1", "")
     if ", ." in paragraph:
-        paragraph.replace(", .", ".")
+        paragraph = paragraph.replace(", .", ".")
     return paragraph
 
 
@@ -165,3 +191,22 @@ def delete_markdown_file(file_name: str) -> None:
         file_name (str): File name
     """
     os.remove(f"./tmp/{file_name}.md")
+
+def save_html_to_file(html_text: str) -> str:    
+    """Function to save HTML to file and return file name
+
+    Args:
+        html_text (str): HTML text
+    """
+    file_name = html_text.split("\n")[0].split("<h1>")[1].replace(" ", "_").replace(",", "").replace(":", "").replace("'", "").lower().split("</h1>")[0]
+    with open(f"./tmp/{file_name}.html", "w") as file:
+        file.write(html_text)
+    return file_name
+
+def delete_html_file(file_name: str) -> None:
+    """Function to delete HTML file
+
+    Args:
+        file_name (str): File name
+    """
+    os.remove(f"./tmp/{file_name}.html")
