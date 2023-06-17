@@ -134,7 +134,7 @@ def create_article_html(article_dict: dict) -> str:
     videos_used_counter = 0
     paragraph_list = article_dict["full_article_text"].split("\n")
     html = ""
-    
+
     #add css | this line can be removed if you don't want to add css
     html += add_css_to_html() + "\n\n"
 
@@ -142,7 +142,8 @@ def create_article_html(article_dict: dict) -> str:
     html += f"<h1>{title}</h1>\n\n"
     description = rewrite_paragraph(article_dict['article_description'])
     html += f"<h3>{description}</h3>\n\n"
-    html += f'<img src="{article_dict["image_url"]}" alt="{article_dict["main_image_description"]}">\n\n'
+    if article_dict["image_url"]:
+        html += f'<img src="{article_dict["image_url"]}" alt="{article_dict["main_image_description"]}">\n\n'
     for paragraph in paragraph_list:
         if article_dict["videos_ids"]:
             if paragraph.startswith("'") and paragraph.endswith("'"):
