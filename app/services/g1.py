@@ -40,7 +40,7 @@ def get_g1_articles(url: str = DEFAULT_URL) -> list:
 
         for article in article_list:
             scraper.driver.get(article["article_url"])
-            video_urls = []
+            videos_ids = []
 
             try:
                 image_element = scraper.driver.find_element(By.TAG_NAME, "amp-img")
@@ -56,8 +56,9 @@ def get_g1_articles(url: str = DEFAULT_URL) -> list:
                 for video_element in video_elements:
                     iframe = video_element.find_element(By.TAG_NAME, "iframe")
                     video_url = iframe.get_attribute("src")
-                    video_urls.append(video_url)
-                article["video_urls"] = video_urls
+                    video_id = video_url.split("/")[4].split("?")[0]
+                    videos_ids.append(video_id)
+                article["videos_ids"] = videos_ids
             except NoSuchElementException:
                 pass
 
@@ -88,3 +89,30 @@ def sanitize_article(full_article_text: str) -> tuple:
     main_image_description = split_article[0]
     sanitized_article = "\n".join(split_article[1:])
     return main_image_description, sanitized_article
+
+def create_markdown(article_dict: dict) -> str:
+    """Function to create markdown from article dict
+
+    Args:
+        article_dict (dict): Article
+
+    Returns:
+        str: Markdown
+    """
+    videos_used_counter = 0
+    paragraph_list = article_dict["full_article_text"].split("\n")
+    markdown = f"# {article_dict['article_title']}\n\n"
+    markdown += f"## {article_dict['article_description']}\n\n"
+    markdown += f"![{article_dict['main_image_description']}]({article_dict['image_url']})\n\n"
+    for paragraph in paragraph_list:
+        if article_dict["videos_ids"]:
+            if paragraph.startswith("'") and paragraph.endswith("'"):
+                markdown += f"### {paragraph[1:-1]}\n\n"
+                markdown += f"[![](https://img.youtube.com/vi/{article_dict['videos_ids'][videos_used_counter]}/0.jpg)](https://www.youtube.com/watch?v={article_dict['videos_ids'][videos_used_counter]})\n\n"
+                videos_used_counter += 1
+            else:
+                markdown += f"{paragraph}\n\n"
+        else:
+            markdown += f"{paragraph}\n\n"
+    return markdown
+
