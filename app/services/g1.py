@@ -161,7 +161,7 @@ def create_article_html(article_dict: dict) -> str:
         if article_dict["videos_ids"]:
             if paragraph.startswith("'") and paragraph.endswith("'"):
                 html += f"<h2>{paragraph[1:-1]}</h2>\n\n"
-                html += f'<iframe class="centered-iframe" width="560" height="315" src="https://www.youtube.com/embed/{article_dict["videos_ids"][videos_used_counter]}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>\n\n'
+                html += f'<iframe class="centered-iframe" width="100%" height="50%" src="https://www.youtube.com/embed/{article_dict["videos_ids"][videos_used_counter]}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>\n\n'
                 videos_used_counter += 1
             else:
                 paragraph = rewrite_paragraph(paragraph)
