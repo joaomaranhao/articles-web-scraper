@@ -12,6 +12,7 @@ class DataScraper:
         options (selenium.webdriver.chrome.options.Options): Options to configure Chrome
         driver (selenium.webdriver.chrome.webdriver.WebDriver): Chrome webdriver
     """
+
     def __init__(self, webdriver_manager: bool = False, headless: bool = True) -> None:
         """Constructor
 
@@ -53,7 +54,7 @@ class DataScraper:
                     log_path="/tmp/chromedriver.log",
                 ),
             )
-            
+
         else:
             self.driver = webdriver.Chrome(
                 service=Service(
@@ -61,10 +62,11 @@ class DataScraper:
                     log_path="/tmp/chromedriver.log",
                 ),
                 options=self.options,
-        )
+            )
 
     def quit(self):
         self.driver.quit()
+
 
 def instantiate_driver() -> DataScraper:
     """Function to instantiate driver
