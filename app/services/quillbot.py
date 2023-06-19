@@ -7,9 +7,7 @@ from selenium.webdriver.common.by import By
 DEFAULT_URL = "https://quillbot.com/"
 
 
-def rewrite_paragraph(
-    paragraph: str, pt_br: bool = True, scraper: DataScraper = instantiate_driver()
-) -> str | None:
+def rewrite_paragraph(paragraph: str, pt_br: bool = True) -> str | None:
     """Function to rewrite paragraphs using Quillbot
 
     Args:
@@ -18,6 +16,7 @@ def rewrite_paragraph(
     Returns:
         list: List of rewritten paragraphs
     """
+    scraper = DataScraper(webdriver_manager=True, headless=False)
     try:
         scraper.driver.get(DEFAULT_URL)
     except WebDriverException:

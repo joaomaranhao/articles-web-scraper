@@ -5,9 +5,7 @@ from selenium.webdriver.common.by import By
 DEFAULT_URL = "https://g1.globo.com/pop-arte/games/"
 
 
-def get_g1_articles(
-    url: str = DEFAULT_URL, scraper: DataScraper = instantiate_driver()
-) -> list:
+def get_g1_articles(url: str = DEFAULT_URL) -> list:
     """Function to get articles from G1
 
     Args:
@@ -17,6 +15,7 @@ def get_g1_articles(
         list: List of articles
     """
     try:
+        scraper = DataScraper(webdriver_manager=True, headless=False)
         try:
             scraper.driver.get(url)
         except WebDriverException:
@@ -39,6 +38,7 @@ def get_g1_articles(
                 "article_url": article_url,
                 "article_title": article_title,
                 "article_description": article_description,
+                "image_url": "",
             }
             article_list.append(article_dict)
 
@@ -82,7 +82,6 @@ def get_g1_articles(
         return article_list
     except Exception as e:
         print(e)
-        scraper.quit()
         return []
 
 
