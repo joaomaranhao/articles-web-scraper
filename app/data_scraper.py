@@ -66,5 +66,11 @@ class DataScraper:
     def quit(self):
         self.driver.quit()
 
+def instantiate_driver() -> DataScraper:
+    """Function to instantiate driver
 
-
+    Returns:
+        DataScraper: DataScraper object
+    """
+    scraper = DataScraper(webdriver_manager=True, headless=False)
+    return scraper

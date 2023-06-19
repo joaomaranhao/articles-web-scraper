@@ -1,13 +1,17 @@
-from unicodedata import normalize
 import os
-from data_scraper import DataScraper
-from selenium.webdriver.common.by import By
+from unicodedata import normalize
+
+from data_scraper import DataScraper, instantiate_driver
 from selenium.common.exceptions import NoSuchElementException, WebDriverException
+from selenium.webdriver.common.by import By
 from services.quillbot import rewrite_paragraph
 
 DEFAULT_URL = "https://g1.globo.com/pop-arte/games/"
 
-def get_g1_articles(url: str = DEFAULT_URL) -> list:
+
+def get_g1_articles(
+    url: str = DEFAULT_URL, scraper: DataScraper = instantiate_driver()
+) -> list:
     """Function to get articles from G1
 
     Args:
@@ -17,7 +21,6 @@ def get_g1_articles(url: str = DEFAULT_URL) -> list:
         list: List of articles
     """
     try:
-        scraper = DataScraper(webdriver_manager=True, headless=False)
         try:
             scraper.driver.get(url)
         except WebDriverException:
@@ -28,7 +31,9 @@ def get_g1_articles(url: str = DEFAULT_URL) -> list:
         articles = scraper.driver.find_elements(By.CLASS_NAME, "feed-post-body")
         for article in articles:
             title_element = article.find_element(By.CLASS_NAME, "gui-color-hover")
-            description_element = article.find_element(By.CLASS_NAME, "feed-post-body-resumo")
+            description_element = article.find_element(
+                By.CLASS_NAME, "feed-post-body-resumo"
+            )
 
             article_url = article.find_element(By.TAG_NAME, "a").get_attribute("href")
             article_title = sanitize_paragraph(title_element.text)
@@ -55,30 +60,36 @@ def get_g1_articles(url: str = DEFAULT_URL) -> list:
                 pass
 
             try:
-                video_elements = scraper.driver.find_elements(By.CLASS_NAME, "block-youtube")
+                video_elements = scraper.driver.find_elements(
+                    By.CLASS_NAME, "block-youtube"
+                )
                 for video_element in video_elements:
                     iframe = video_element.find_element(By.TAG_NAME, "iframe")
                     video_url = iframe.get_attribute("src")
-                    video_id = video_url.split("/")[4].split("?")[0]
-                    videos_ids.append(video_id)
+                    if video_url:
+                        video_id = video_url.split("/")[4].split("?")[0]
+                        videos_ids.append(video_id)
                 article["videos_ids"] = videos_ids
             except NoSuchElementException:
                 pass
 
             full_article = scraper.driver.find_element(By.TAG_NAME, "article")
             full_article_text = full_article.text
-            main_image_description, sanitized_article = sanitize_article(full_article_text)
+            main_image_description, sanitized_article = sanitize_article(
+                full_article_text
+            )
             article["main_image_description"] = main_image_description
 
             article["full_article_text"] = sanitized_article
-        
+
         scraper.quit()
         return article_list
     except Exception as e:
         print(e)
         scraper.quit()
         return []
-    
+
+
 def sanitize_article(full_article_text: str) -> tuple:
     """Function to sanitize article
 
@@ -94,6 +105,7 @@ def sanitize_article(full_article_text: str) -> tuple:
     main_image_description = split_article[0]
     sanitized_article = "\n".join(split_article[1:])
     return main_image_description, sanitized_article
+
 
 def sanitize_paragraph(paragraph: str) -> str:
     """Function to sanitize paragraph
@@ -122,6 +134,7 @@ def sanitize_paragraph(paragraph: str) -> str:
         paragraph = paragraph.replace(", .", ".")
     return paragraph
 
+
 def create_article_html(article_dict: dict) -> str:
     """Function to create HTML from article dict
 
@@ -135,12 +148,12 @@ def create_article_html(article_dict: dict) -> str:
     paragraph_list = article_dict["full_article_text"].split("\n")
     html = ""
 
-    #add css | this line can be removed if you don't want to add css
+    # add css | this line can be removed if you don't want to add css
     html += add_css_to_html() + "\n\n"
 
-    title = rewrite_paragraph(article_dict['article_title'])
+    title = rewrite_paragraph(article_dict["article_title"])
     html += f"<h1>{title}</h1>\n\n"
-    description = rewrite_paragraph(article_dict['article_description'])
+    description = rewrite_paragraph(article_dict["article_description"])
     html += f"<h3>{description}</h3>\n\n"
     if article_dict["image_url"]:
         html += f'<img src="{article_dict["image_url"]}" alt="{article_dict["main_image_description"]}">\n\n'
@@ -158,17 +171,27 @@ def create_article_html(article_dict: dict) -> str:
             html += f"<p>{paragraph}</p>\n\n"
     return html
 
-def save_html_to_file(html_text: str) -> str:    
+
+def save_html_to_file(html_text: str) -> str:
     """Function to save HTML to file and return file name
 
     Args:
         html_text (str): HTML text
     """
-    file_name = html_text.split("<h1>")[1].replace(" ", "_").replace(",", "").replace(":", "").replace("'", "").lower().split("</h1>")[0]
+    file_name = (
+        html_text.split("<h1>")[1]
+        .replace(" ", "_")
+        .replace(",", "")
+        .replace(":", "")
+        .replace("'", "")
+        .lower()
+        .split("</h1>")[0]
+    )
     file_name = remove_accents(file_name)
     with open(f"./tmp/{file_name}.html", "w") as file:
         file.write(html_text)
     return file_name
+
 
 def delete_html_file(file_name: str) -> None:
     """Function to delete HTML file
@@ -178,9 +201,10 @@ def delete_html_file(file_name: str) -> None:
     """
     os.remove(f"./tmp/{file_name}.html")
 
+
 def remove_accents(input_string):
-    normalized_string = normalize('NFKD', input_string)
-    ascii_string = normalized_string.encode('ASCII', 'ignore').decode('utf-8')
+    normalized_string = normalize("NFKD", input_string)
+    ascii_string = normalized_string.encode("ASCII", "ignore").decode("utf-8")
     return ascii_string
 
 
@@ -225,4 +249,3 @@ def add_css_to_html() -> str:
         </style>
         """
     return style
-    
