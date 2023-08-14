@@ -16,8 +16,8 @@ def get_g1_articles(url: str = DEFAULT_URL) -> list:
     Returns:
         list: List of articles
     """
+    scraper = DataScraper(headless=False)
     try:
-        scraper = DataScraper(webdriver_manager=True, headless=False)
         try:
             scraper.driver.get(url)
         except WebDriverException:

@@ -1,7 +1,5 @@
-from selenium import webdriver
+from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
 
 
 class DataScraper:
@@ -10,13 +8,11 @@ class DataScraper:
     Attributes:
         _download_path (str): Path to download files
         options (selenium.webdriver.chrome.options.Options): Options to configure Chrome
-        driver (selenium.webdriver.chrome.webdriver.WebDriver): Chrome webdriver
     """
-    def __init__(self, webdriver_manager: bool = False, headless: bool = True) -> None:
+    def __init__(self, headless: bool = True) -> None:
         """Constructor
 
         Args:
-            webdriver_manager (bool, optional): Use webdriver_manager to download ChromeDriver. Defaults to False.
             headless (bool, optional): Run Chrome in headless mode. Defaults to True.
         """
 
@@ -24,7 +20,6 @@ class DataScraper:
 
         # SELENIUM
         self.options = Options()
-        self.options.binary_location = "/opt/chrome/chrome"
         self.options.add_experimental_option(
             "prefs",
             {
@@ -35,32 +30,11 @@ class DataScraper:
                 "plugins.always_open_pdf_externally": True,
             },
         )
-        self.options.add_argument("--no-sandbox")
-        self.options.add_argument("--disable-dev-shm-usage")
-        self.options.add_argument("--disable-gpu")
-        self.options.add_argument("--disable-dev-tools")
-        self.options.add_argument("--no-zygote")
-        self.options.add_argument("--single-process")
-        self.options.add_argument("window-size=2560x1440")
-        self.options.add_argument("--user-data-dir=/tmp/chrome-user-data")
-        self.options.add_argument("--remote-debugging-port=9222")
-        self.options.add_argument("--headless")
-
-        if webdriver_manager:
-            self.driver = webdriver.Chrome(
-                service=Service(
-                    executable_path=ChromeDriverManager().install(),
-                    log_path="/tmp/chromedriver.log",
-                ),
-            )
+        if headless:
+            self.options.add_argument("--headless")
             
-        else:
-            self.driver = webdriver.Chrome(
-                service=Service(
-                    executable_path="/opt/chromedriver/chromedriver",
-                    log_path="/tmp/chromedriver.log",
-                ),
-                options=self.options,
+        self.driver = WebDriver(
+            options=self.options,
         )
 
     def quit(self):
